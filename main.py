@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import Response, RedirectResponse
+from fastapi.responses import Response, RedirectResponse, StreamingResponse
 from bs4 import BeautifulSoup
 from datetime import datetime
 import httpx, os, json, logging
@@ -110,6 +110,7 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
 
     async with httpx.AsyncClient(cookies=cookies_jar) as client:
         resp = await client.get(search_url)
+        logger.info(f"🔎 Search request to: {search_url} => {resp.status_code}")
         if resp.status_code != 200:
             logger.error(f"Search failed: {resp.status_code}")
         if "form" in resp.text and "password" in resp.text:
@@ -124,7 +125,7 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         book_id = item.get("id", "")
         download_path = item.get("download", "")
         token = quote(f"{book_id}:{download_path}", safe="")
-        book_url = f"{BASE_URL}{download_path}"
+        book_url = f"/download?token={token}"
         cover_url = item.select_one("img").get("data-src", "")
         extension = item.get("extension", "")
         filesize = item.get("filesize", "")
@@ -163,6 +164,19 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
 
 @app.get("/download")
 async def download(token: str):
-    book_id, path = token.split(":", 1)
-    url = f"{BASE_URL}{unquote(path)}"
-    return RedirectResponse(url)
+    try:
+        book_id, path = token.split(":", 1)
+        path = unquote(path)
+        url = f"{BASE_URL}{path}"
+        logger.info(f"📥 Downloading from {url} with token {token}")
+
+        async with httpx.AsyncClient(cookies=cookies_jar, follow_redirects=True) as client:
+            resp = await client.get(url)
+            logger.info(f"📦 Download response status: {resp.status_code}, headers: {dict(resp.headers)}")
+            if resp.status_code == 200:
+                return Response(content=resp.content, media_type=resp.headers.get("content-type", "application/octet-stream"))
+            else:
+                return Response(f"Download failed with status {resp.status_code}", status_code=resp.status_code)
+    except Exception as e:
+        logger.exception("Download failed")
+        return Response("Internal error", status_code=500)
