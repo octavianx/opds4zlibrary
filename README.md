@@ -37,9 +37,9 @@ Playwright 是用来自动化登录 Z-Library 的，它需要额外安装浏览�
 
 安装 Playwright Python SDK：
 
-   ```bash
+```bash
    pip install playwright
-
+```
 
 安装 playwright 浏览器驱动
 ```bash
