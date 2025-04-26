@@ -1,7 +1,88 @@
 ## OPDS4ZLIBRARY
 
-Z-library的OPDS封装，这样用OPDS客户端就能直接访问zlib，不再需要其他计算设备下载中转了。
 
+当然可以，我帮你写一版放到GitHub用的，清晰、专业、简单易懂。可以直接加到你的 `README.md`！
+
+---
+
+# 📖 Z-Library OPDS Proxy
+
+本项目将 Z-Library 的内容包装为标准 OPDS Catalog，可以被各类阅读器（如 Marvin、Lithium、Aldiko、Moon+ Reader等）直接浏览和下载。
+
+---
+
+## 🛠 安装与环境初始化
+
+### 1. 克隆项目
+
+略，进入项目目录
+
+### 2. 创建虚拟环境（推荐）
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+# 或
+.venv\Scripts\activate     # Windows
+```
+
+### 3. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+*必要依赖包括：* `fastapi`, `httpx`, `beautifulsoup4`, `python-dotenv`, `uvicorn` 等。
+
+### 4. 配置 `.env`
+
+在项目根目录创建 `.env` 文件，内容示例：
+
+```bash
+ZLIB_EMAIL=your@email.com
+ZLIB_PASSWORD=your_password
+```
+
+用于Playwright自动登录提取Z-Lib登录cookie。
+
+> ⚡ **注意：首次登录需要执行 playwright 自动登录工具，后续将使用本地缓存cookie，无需重复登录。**
+
+---
+
+## 🚀 启动服务
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+启动后访问：
+
+- OPDS Catalog根目录： `http://localhost:8000/opds`
+- 示例搜索（如Python相关书籍）： `http://localhost:8000/opds/search?q=python`
+
+可以在 OPDS 客户端添加 `http://your-server-ip:8000/opds` 作为书库源！
+
+---
+
+## 🔑 第一次使用？登录并提取 Z-Lib Cookie
+
+执行一次以下命令，自动登录并保存 cookie：
+
+```bash
+python zlib_opds_launcher.py
+```
+
+登录成功后，会生成 `zlib_cookies.json` 文件，供本地OPDS代理读取使用。
+
+---
+
+## 💡 注意事项
+
+- 本项目为教育研究用途，请勿用于商业行为。
+- 访问Z-Lib需要有效账号，请妥善保管自己的账户信息。
+- 请遵守所在地区法律法规，对于使用本代码所产生的一起后果，请自行承担。
+
+---
 
 ## 🛣 Roadmap
 
