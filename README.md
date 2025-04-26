@@ -29,6 +29,24 @@ pip install -r requirements.txt
 
 *必要依赖包括：* `fastapi`, `httpx`, `beautifulsoup4`, `python-dotenv`, `uvicorn` 等。
 
+
+###  **Playwright 安装浏览器引擎**
+
+Playwright 是用来自动化登录 Z-Library 的，它需要额外安装浏览器驱动：
+
+```bash
+playwright install
+```
+
+（此命令会下载 Chromium / Firefox / WebKit 三个浏览器的无头版本）
+
+如果你只需要 Chromium，可以指定安装：
+
+```bash
+playwright install chromium
+```
+
+
 ### 4. 配置 `.env`
 
 在项目根目录创建 `.env` 文件，内容示例：
