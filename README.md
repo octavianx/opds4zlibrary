@@ -1,9 +1,4 @@
-## OPDS4ZLIBRARY
-
-
-当然可以，我帮你写一版放到GitHub用的，清晰、专业、简单易懂。可以直接加到你的 `README.md`！
-
----
+ 
 
 # 📖 Z-Library OPDS Proxy
 
