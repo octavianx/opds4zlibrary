@@ -34,6 +34,14 @@ pip install -r requirements.txt
 
 Playwright 是用来自动化登录 Z-Library 的，它需要额外安装浏览器驱动：
 
+
+安装 Playwright Python SDK：
+
+   ```bash
+   pip install playwright
+
+
+安装 playwright 浏览器驱动
 ```bash
 playwright install
 ```
@@ -46,6 +54,7 @@ playwright install
 playwright install chromium
 ```
 
+⚡ 注意：必须执行 playwright install，否则无法进行自动化登录操作。
 
 ### 4. 配置 `.env`
 
