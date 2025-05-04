@@ -1,13 +1,12 @@
-#291 lines
-from fastapi import FastAPI, Query, Request
-from fastapi.responses import Response, RedirectResponse, StreamingResponse
+from fastapi import FastAPI, Query, Request, Depends, HTTPException, status
+from fastapi.responses import Response, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from bs4 import BeautifulSoup
 from datetime import datetime
-import httpx, os, json, logging
+import httpx, os, json, logging, secrets
 from dotenv import load_dotenv
 from urllib.parse import quote_plus, quote, unquote, urlparse, parse_qs
 from html import escape
-
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +16,37 @@ load_dotenv()
 BASE_URL = "https://z-lib.fm"
 COOKIE_FILE = "zlib_cookies.json"
 cookies_jar = httpx.Cookies()
+
+USERNAME = os.getenv("OPDS_USER", "admin")
+PASSWORD = os.getenv("OPDS_PASS", "password")
+ 
+
+# 注意一定要写 auto_error = false才能让你的http header有效
+security = HTTPBasic(auto_error=False)
+
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
+    if credentials is None or not credentials.username:
+        # 未提供任何凭证
+        logger.info(f"🚨 no credential provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": 'Basic realm="Login Required"'}
+        )
+    # 校验用户名和密码（假设正确凭证为 user/pass）
+    correct_username = secrets.compare_digest(credentials.username, USERNAME)
+    correct_password = secrets.compare_digest(credentials.password, PASSWORD)
+    
+    if not (correct_username and correct_password):
+        # 凭证不匹配
+        logger.info(f" 🚨  credential error")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": 'Basic realm="Login Required"'}
+        )
+    return True  # 验证通过
+
 
 def load_cookies():
     global cookies_jar
@@ -36,9 +66,8 @@ async def homepage():
     return RedirectResponse(url="/opds")
 
 @app.get("/opds")
-async def opds_index(request: Request):
+async def opds_index(request: Request, credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     updated = datetime.utcnow().isoformat() + "Z"
-    base_url = str(request.base_url).rstrip("/")
     xml = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'
       xmlns:opds='http://opds-spec.org/2010/catalog'>
@@ -67,7 +96,7 @@ async def opds_index(request: Request):
     return Response(content=xml.strip(), media_type="application/atom+xml")
 
 @app.get("/opds/root.xml")
-async def opds_root():
+async def opds_root(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     updated = datetime.utcnow().isoformat() + "Z"
     xml = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns="http://www.w3.org/2005/Atom"
@@ -118,7 +147,7 @@ async def opensearch_description(request: Request):
     return Response(content=xml.strip(), media_type="application/opensearchdescription+xml")
 
 @app.get("/opds/search")
-async def search_books(q: str = Query(...), page: int = Query(1)):
+async def search_books(q: str = Query(...), page: int = Query(1), credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     keywords = " ".join(q.strip().split())
     encoded_keywords = quote_plus(keywords).replace("+", "%20")
     search_url = f"{BASE_URL}/s/{encoded_keywords}?page={page}"
@@ -138,40 +167,32 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         title = escape(item.select_one("div[slot=title]").text.strip())
         author = escape(item.select_one("div[slot=author]").text.strip())
         publisher = escape(item.get("publisher", ""))
-        published_date = ""
-
         book_id = item.get("id", "")
         download_path = item.get("download", "")
         token = quote(f"{book_id}:{download_path}", safe="")
         book_url = f"/download?token={token}"
-        cover_url = item.select_one("img").get("data-src", "")
-        extension = item.get("extension", "")
-        filesize = item.get("filesize", "")
-        year = item.get("year", "")
+        cover_url = escape(item.select_one("img").get("data-src", ""))
+        extension = escape(item.get("extension", ""))
+        filesize = escape(item.get("filesize", ""))
+        year = escape(item.get("year", ""))
 
-        published = ""
         if year and year.isdigit():
-            try:
-                published_date = f"{year}-01-01T00:00:00Z"
-            except:
-                logger.warning(f"⚠️ Failed to format year: {year}")
+            published_date = f"{year}-01-01T00:00:00Z"
+        else:
+            published_date = ""
 
         emoji_map = {
-            "pdf": "📕",
-            "epub": "📚",
-            "mobi": "📘",
-            "djvu": "📄",
-            "azw3": "📙",
-            "txt": "📝"
+            "pdf": "📕", "epub": "📚", "mobi": "📘", "djvu": "📄",
+            "azw3": "📙", "txt": "📝"
         }
         emoji = emoji_map.get(extension.lower(), "📦")
-        summary = escape(f"{emoji} {extension.upper()}, {filesize}, {year}")
+        summary = f"{emoji} {extension.upper()}, {filesize}, {year}"
 
         entries += f"""
         <entry>
             <title>{title}</title>
             <author><name>{emoji}{author}</name></author>
-            <publisher><name>🏫 {publisher}/{extension},{filesize}</name></publisher>
+            <publisher><name>🏛️ {publisher}/{extension},{filesize}</name></publisher>
             <published>{published_date}</published>
             <id>{book_url}</id>
             <link rel='http://opds-spec.org/acquisition' href='{book_url}' type='application/octet-stream'/>
@@ -210,7 +231,7 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page=1")
         next_link += f"\n    <link rel='first' href='{temp_href}' type='application/atom+xml'/>"
 
-    href_escaped=escape(f"/opds/search?q={quote_plus(keywords)}&page={page}")
+    href_escaped = escape(f"/opds/search?q={quote_plus(keywords)}&page={page}")
 
     feed = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'>
@@ -243,28 +264,23 @@ async def download(token: str):
         logger.exception("Download failed")
         return Response("Internal error", status_code=500)
 
-
 @app.get("/opds/nyt-bestsellers")
-async def nyt_bestsellers(request: Request):
+async def nyt_bestsellers(request: Request, credentials: HTTPBasicCredentials = Depends(verify_credentials)):
     api_key = os.getenv("NYT_API_KEY")
     url = f"https://api.nytimes.com/svc/books/v3/lists/current/hardcover-nonfiction.json?api-key={api_key}"
-
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
         data = resp.json()
 
     books = data.get("results", {}).get("books", [])
-    base_url = str(request.base_url).rstrip("/")
     updated = datetime.utcnow().isoformat() + "Z"
-
     entries = ""
     for book in books:
         title = escape(book.get("title", "Untitled").strip())
         author = escape(book.get("author", "Unknown").strip())
         desc = escape(book.get("description", ""))
-        img = book.get("book_image", "")
-        search_url_raw = f"/opds/search?q={quote_plus(title)}"
-        search_url = escape(search_url_raw)
+        img = escape(book.get("book_image", ""))
+        search_url = escape(f"/opds/search?q={quote_plus(title)}")
 
         entries += f"""
         <entry>
@@ -281,7 +297,7 @@ async def nyt_bestsellers(request: Request):
 
     feed = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'>
-  <title>NYT Bestsellers: Hardcover Fiction</title>
+  <title>NYT Bestsellers: Hardcover Nonfiction</title>
   <id>urn:zlib:opds:nyt-bestsellers</id>
   <updated>{updated}</updated>
   <link rel='self' href='/opds/nyt-bestsellers' type='application/atom+xml'/>
