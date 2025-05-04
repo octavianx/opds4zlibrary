@@ -102,7 +102,7 @@ python zlib_opds_launcher.py
 
 - 本项目为教育研究用途，请勿用于商业行为。
 - 访问Z-Lib需要有效账号，请妥善保管自己的账户信息。
-- 请遵守所在地区法律法规，对于使用本代码所产生的一起后果，请自行承担。
+- 请遵守所在地区法律法规，对于使用本代码所产生的后果，请自行评估并承担。
 
 ---
 
@@ -112,7 +112,7 @@ python zlib_opds_launcher.py
 |:---|:---|:---|
 | ✅ 完成 | 基础OPDS目录（/opds, /opds/root.xml, /opds/opensearch.xml） | 兼容常见OPDS客户端 |
 | ✅ 完成 | 搜索+分页功能（/opds/search） | 支持多关键词检索 |
-| ✅ 完成 | Popular推荐（/opds/popular） | 模拟分类浏览 |
+| 🆕 计划 | Popular推荐（/opds/popular） | 模拟分类浏览 |
 | ✅ 完成 | 带登录cookie的中转下载 | 保证大部分文件能顺利下载 |
 | 🔥 进行中 | 下载异常容错 | 403/404处理，超时处理，错误提示 |
 | 🆕 计划 | `/opds/new` 新书推荐目录 | 解析Z-Lib首页推荐 |
@@ -120,7 +120,9 @@ python zlib_opds_launcher.py
 | 🆕 计划 | `/opds/author/{author}` 作者浏览 | 通过作者名搜索 |
 | 🆕 计划 | 基于 sertraline/zlibrary API 的搜索加速模式 | 高速但不稳定 |
 | 🆕 计划 | 登录Cookie定时刷新 | 通过Playwright后台刷新登录状态 |
-| 🆕 计划 | 加入 API-Key或BasicAuth保护 | 防止被爬虫滥用 |
+| ✅ 完成 | HTTP BasicAuth for OPDS | 防止被爬虫滥用 |
+| ✅ 完成 | 支持Moon reader, 支持 KyBook 3 | 多客户端支持 |
+| ✅ 完成 | support new york times best seller ranking list |  multiple sourcing |
 | 🆕 计划 | Docker打包 | 支持NAS/VPS一键部署 |
 
 ---
