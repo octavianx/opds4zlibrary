@@ -12,7 +12,8 @@ app = FastAPI()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-load_dotenv()
+load_dotenv("config.env")  # 明确指定路径
+
 BASE_URL = "https://z-lib.fm"
 COOKIE_FILE = "zlib_cookies.json"
 cookies_jar = httpx.Cookies()

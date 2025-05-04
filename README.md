@@ -56,9 +56,10 @@ playwright install chromium
 
 ⚡ 注意：必须执行 playwright install，否则无法进行自动化登录操作。
 
-### 4. 配置 `.env`
+### 4. 配置 ` config.env `  # 明确指定路径
+`
 
-在项目根目录创建 `.env` 文件，内容示例：
+在项目根目录创建 `config.env` 文件，内容示例：
 
 ```bash
 ZLIB_EMAIL= "your@email.com"

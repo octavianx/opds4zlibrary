@@ -5,7 +5,8 @@ import json
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv("config.env")  # 明确指定路径
+
 ZLIB_EMAIL = os.getenv("ZLIB_EMAIL")
 ZLIB_PASSWORD = os.getenv("ZLIB_PASSWORD")
 
