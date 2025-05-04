@@ -134,11 +134,11 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
     book_items = soup.select("z-bookcard")
     entries = ""
     for item in book_items:
-        title = item.select_one("div[slot=title]").text.strip()
-        author = item.select_one("div[slot=author]").text.strip()
-        publisher = item.get("publisher", "")
+        title = escape(item.select_one("div[slot=title]").text.strip())
+        author = escape(item.select_one("div[slot=author]").text.strip())
+        publisher = escape(item.get("publisher", ""))
 
-        #logger.info(f"✅ publiser: {publisher}")
+
 
         book_id = item.get("id", "")
         download_path = item.get("download", "")
@@ -153,7 +153,6 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         if year and year.isdigit():
             try:
                 published_date = f"{year}-01-01T00:00:00Z"
-            
             except:
                 logger.warning(f"⚠️ Failed to format year: {year}")
 
@@ -166,13 +165,13 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
             "txt": "📝"
         }
         emoji = emoji_map.get(extension.lower(), "📦")
-        summary = f"{emoji} {extension.upper()}, {filesize}, {year}"
+        summary = escape(f"{emoji} {extension.upper()}, {filesize}, {year}")
 
         entries += f"""
         <entry>
             <title>{title}</title>
             <author><name>{emoji}{author}</name></author>
-            <publisher><name>🏛️ {publisher}/{extension},{filesize}</name></publisher>
+            <publisher><name>🏫 {publisher}/{extension},{filesize}</name></publisher>
             <published>{published_date}</published>
             <id>{book_url}</id>
             <link rel='http://opds-spec.org/acquisition' href='{book_url}' type='application/octet-stream'/>
@@ -210,8 +209,8 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
 
     feed = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'>
-  <title>Z-Library Search: {keywords}</title>
-  <id>urn:zlib:opds:search:{keywords.replace(" ", "-")}</id>
+  <title>Z-Library Search: {escape(keywords)}</title>
+  <id>urn:zlib:opds:search:{escape(keywords.replace(" ", "-"))}</id>
   <updated>{datetime.utcnow().isoformat()}Z</updated>
   <link rel='self' type='application/atom+xml' href='{href_escaped}'/>
   <link rel='start' type='application/atom+xml' href='/opds/root.xml'/>
@@ -240,8 +239,6 @@ async def download(token: str):
         return Response("Internal error", status_code=500)
 
 
- 
-
 @app.get("/opds/nyt-bestsellers")
 async def nyt_bestsellers(request: Request):
     api_key = os.getenv("NYT_API_KEY")
@@ -257,9 +254,9 @@ async def nyt_bestsellers(request: Request):
 
     entries = ""
     for book in books:
-        title = book.get("title", "Untitled").strip()
-        author = book.get("author", "Unknown").strip()
-        desc = book.get("description", "")
+        title = escape(book.get("title", "Untitled").strip())
+        author = escape(book.get("author", "Unknown").strip())
+        desc = escape(book.get("description", ""))
         img = book.get("book_image", "")
         search_url_raw = f"/opds/search?q={quote_plus(title)}"
         search_url = escape(search_url_raw)
@@ -287,4 +284,3 @@ async def nyt_bestsellers(request: Request):
   {entries}
 </feed>"""
     return Response(content=feed.strip(), media_type="application/atom+xml")
-    
