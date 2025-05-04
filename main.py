@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import httpx, os, json, logging
 from dotenv import load_dotenv
-from urllib.parse import quote_plus, quote, unquote
+from urllib.parse import quote_plus, quote, unquote, urlparse, parse_qs
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
@@ -87,6 +87,13 @@ async def opds_root():
     <link rel="subsection" href="/opds/search?q=deep%20learning" type="application/atom+xml"/>
     <content type="text">Search for books about Deep Learning</content>
   </entry>
+  <entry>
+    <title>Popular Recommendations</title>
+    <id>urn:zlib:opds:popular</id>
+    <updated>{updated}</updated>
+    <link rel="subsection" href="/opds/popular" type="application/atom+xml"/>
+    <content type="text">Recommended books from Z-Library</content>
+  </entry>  
 </feed>"""
     return Response(content=xml.strip(), media_type="application/atom+xml")
 
@@ -145,10 +152,28 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         </entry>
         """
 
+    # 修复分页检测
+    print(resp.text[:2000]) 
+
+    # 修复分页检测：使用 paginator 的 rel 属性检测下一页
     next_link = ""
-    if soup.select_one("a[title='Next page']"):
-        next_q = quote_plus(keywords)
-        next_link = f"<link rel='next' href='/opds/search?q={next_q}&page={page + 1}' type='application/atom+xml'/>"
+
+    next_link_tag = soup.select_one("div.paginator noscript a")
+     
+    if next_link_tag:
+        logger.info(f"✅ Found paginator: {next_link_tag.get('href')}")
+    else:
+        logger.warning("⚠️ No pagination link found.")
+
+    if next_link_tag:
+        next_href = next_link_tag.get("href", "")
+    # 提取下一页页码
+        next_page = parse_qs(urlparse(next_href).query).get("page", [None])[0]
+    if next_page:
+        next_link = f"<link rel='next' href='/opds/search?q={quote_plus(keywords)}&page={next_page}' type='application/atom+xml'/>"
+
+
+
 
     feed = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'>
