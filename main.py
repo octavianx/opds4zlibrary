@@ -5,6 +5,8 @@ from datetime import datetime
 import httpx, os, json, logging
 from dotenv import load_dotenv
 from urllib.parse import quote_plus, quote, unquote, urlparse, parse_qs
+from html import escape
+
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
@@ -183,7 +185,9 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
 
     # 修复分页检测：使用 paginator 的 rel 属性检测下一页
     next_link = ""
-
+    next_link_tag = ""
+    href_escaped = ""
+    
     next_link_tag = soup.select_one("div.paginator noscript a")
      
     if next_link_tag:
@@ -196,20 +200,20 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
     # 提取下一页页码
         next_page = parse_qs(urlparse(next_href).query).get("page", [None])[0]
     if next_page:
-        next_link = f"<link rel='next' href='/opds/search?q={quote_plus(keywords)}&page={next_page}' type='application/atom+xml'/>"
+        next_link = escape(f"<link rel='next' href='/opds/search?q={quote_plus(keywords)}&page={next_page}' type='application/atom+xml'/>")
 
     if page > 1:
-        next_link += f"\n    <link rel='previous' href='/opds/search?q={quote_plus(keywords)}&page={page - 1}' type='application/atom+xml'/>"
-        next_link += f"\n    <link rel='first' href='/opds/search?q={quote_plus(keywords)}&page=1' type='application/atom+xml'/>"
+        next_link += escape(f"\n    <link rel='previous' href='/opds/search?q={quote_plus(keywords)}&page={page - 1}' type='application/atom+xml'/>")
+        next_link += escape(f"\n    <link rel='first' href='/opds/search?q={quote_plus(keywords)}&page=1' type='application/atom+xml'/>")
 
-
+    href_escaped=escape(f"/opds/search?q={quote_plus(keywords)}&page={page}")
 
     feed = f"""<?xml version='1.0' encoding='utf-8'?>
 <feed xmlns='http://www.w3.org/2005/Atom'>
   <title>Z-Library Search: {keywords}</title>
   <id>urn:zlib:opds:search:{keywords.replace(" ", "-")}</id>
   <updated>{datetime.utcnow().isoformat()}Z</updated>
-  <link rel='self' type='application/atom+xml' href='/opds/search?q={quote_plus(keywords)}&page={page}'/>
+  <link rel='self' type='application/atom+xml' href='{href_escaped}'/>
   <link rel='start' type='application/atom+xml' href='/opds/root.xml'/>
   {next_link}
   {entries}
@@ -241,7 +245,7 @@ async def download(token: str):
 @app.get("/opds/nyt-bestsellers")
 async def nyt_bestsellers(request: Request):
     api_key = os.getenv("NYT_API_KEY")
-    url = f"https://api.nytimes.com/svc/books/v3/lists/current/hardcover-fiction.json?api-key={api_key}"
+    url = f"https://api.nytimes.com/svc/books/v3/lists/current/hardcover-nonfiction.json?api-key={api_key}"
 
     async with httpx.AsyncClient() as client:
         resp = await client.get(url)
