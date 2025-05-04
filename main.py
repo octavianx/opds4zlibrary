@@ -55,6 +55,11 @@ async def opds_index(request: Request):
     <id>urn:zlib:opds:search:python</id>
     <link rel='subsection' href='/opds/search?q=python' type='application/atom+xml'/>
   </entry>
+  <entry>
+    <title>NYT Bestsellers</title>
+    <id>urn:zlib:opds:nyt-bestsellers</id>
+    <link rel='subsection' href='/opds/nyt-bestsellers' type='application/atom+xml'/>
+  </entry>
 </feed>"""
     return Response(content=xml.strip(), media_type="application/atom+xml")
 
@@ -229,3 +234,53 @@ async def download(token: str):
     except Exception as e:
         logger.exception("Download failed")
         return Response("Internal error", status_code=500)
+
+
+ 
+
+@app.get("/opds/nyt-bestsellers")
+async def nyt_bestsellers(request: Request):
+    api_key = os.getenv("NYT_API_KEY")
+    url = f"https://api.nytimes.com/svc/books/v3/lists/current/hardcover-fiction.json?api-key={api_key}"
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+        data = resp.json()
+
+    books = data.get("results", {}).get("books", [])
+    base_url = str(request.base_url).rstrip("/")
+    updated = datetime.utcnow().isoformat() + "Z"
+
+    entries = ""
+    for book in books:
+        title = book.get("title", "Untitled").strip()
+        author = book.get("author", "Unknown").strip()
+        desc = book.get("description", "")
+        img = book.get("book_image", "")
+        search_url_raw = f"/opds/search?q={quote_plus(title)}"
+        search_url = escape(search_url_raw)
+
+        entries += f"""
+        <entry>
+            <title>{title}</title>
+            <author><name>{author}</name></author>
+            <id>{search_url}</id>
+            <updated>{updated}</updated>
+            <link rel='subsection' href='{search_url}' type='application/atom+xml'/>
+            <content type='text'>{desc}</content>
+            <link rel='http://opds-spec.org/image' href='{img}' type='image/jpeg'/>
+            <link rel='http://opds-spec.org/image/thumbnail' href='{img}' type='image/jpeg'/>
+        </entry>
+        """
+
+    feed = f"""<?xml version='1.0' encoding='utf-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom'>
+  <title>NYT Bestsellers: Hardcover Fiction</title>
+  <id>urn:zlib:opds:nyt-bestsellers</id>
+  <updated>{updated}</updated>
+  <link rel='self' href='/opds/nyt-bestsellers' type='application/atom+xml'/>
+  <link rel='start' href='/opds/root.xml' type='application/atom+xml'/>
+  {entries}
+</feed>"""
+    return Response(content=feed.strip(), media_type="application/atom+xml")
+    
