@@ -129,6 +129,10 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
     for item in book_items:
         title = item.select_one("div[slot=title]").text.strip()
         author = item.select_one("div[slot=author]").text.strip()
+        publisher = item.get("publisher", "")
+
+        #logger.info(f"✅ publiser: {publisher}")
+
         book_id = item.get("id", "")
         download_path = item.get("download", "")
         token = quote(f"{book_id}:{download_path}", safe="")
@@ -137,12 +141,32 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         extension = item.get("extension", "")
         filesize = item.get("filesize", "")
         year = item.get("year", "")
-        summary = f"Format: {extension.upper()}, Size: {filesize}, Year: {year}"
+
+        published = ""
+        if year and year.isdigit():
+            try:
+                published_date = f"{year}-01-01T00:00:00Z"
+            
+            except:
+                logger.warning(f"⚠️ Failed to format year: {year}")
+
+        emoji_map = {
+            "pdf": "📕",
+            "epub": "📚",
+            "mobi": "📘",
+            "djvu": "📄",
+            "azw3": "📙",
+            "txt": "📝"
+        }
+        emoji = emoji_map.get(extension.lower(), "📦")
+        summary = f"{emoji} {extension.upper()}, {filesize}, {year}"
 
         entries += f"""
         <entry>
             <title>{title}</title>
-            <author><name>{author}</name></author>
+            <author><name>{emoji}{author}</name></author>
+            <publisher><name>🏛️ {publisher}/{extension},{filesize}</name></publisher>
+            <published>{published_date}</published>
             <id>{book_url}</id>
             <link rel='http://opds-spec.org/acquisition' href='{book_url}' type='application/octet-stream'/>
             <updated>{datetime.utcnow().isoformat()}Z</updated>
@@ -151,9 +175,6 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
             <link rel='http://opds-spec.org/image/thumbnail' href='{cover_url}' type='image/jpeg'/>
         </entry>
         """
-
-    # 修复分页检测
-    print(resp.text[:2000]) 
 
     # 修复分页检测：使用 paginator 的 rel 属性检测下一页
     next_link = ""
