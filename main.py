@@ -1,3 +1,4 @@
+#291 lines
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import Response, RedirectResponse, StreamingResponse
 from bs4 import BeautifulSoup
@@ -137,8 +138,7 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         title = escape(item.select_one("div[slot=title]").text.strip())
         author = escape(item.select_one("div[slot=author]").text.strip())
         publisher = escape(item.get("publisher", ""))
-
-
+        published_date = ""
 
         book_id = item.get("id", "")
         download_path = item.get("download", "")
@@ -186,9 +186,10 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
     next_link = ""
     next_link_tag = ""
     href_escaped = ""
-    
+    temp_href = ""
+
+    # 修复分页部分的代码
     next_link_tag = soup.select_one("div.paginator noscript a")
-     
     if next_link_tag:
         logger.info(f"✅ Found paginator: {next_link_tag.get('href')}")
     else:
@@ -198,12 +199,16 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
         next_href = next_link_tag.get("href", "")
     # 提取下一页页码
         next_page = parse_qs(urlparse(next_href).query).get("page", [None])[0]
+
     if next_page:
-        next_link = escape(f"<link rel='next' href='/opds/search?q={quote_plus(keywords)}&page={next_page}' type='application/atom+xml'/>")
+        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={next_page}")
+        next_link = f"<link rel='next' href='{temp_href}' type='application/atom+xml'/>"
 
     if page > 1:
-        next_link += escape(f"\n    <link rel='previous' href='/opds/search?q={quote_plus(keywords)}&page={page - 1}' type='application/atom+xml'/>")
-        next_link += escape(f"\n    <link rel='first' href='/opds/search?q={quote_plus(keywords)}&page=1' type='application/atom+xml'/>")
+        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={page - 1}")
+        next_link += f"\n    <link rel='previous' href='{temp_href}' type='application/atom+xml'/>"
+        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page=1")
+        next_link += f"\n    <link rel='first' href='{temp_href}' type='application/atom+xml'/>"
 
     href_escaped=escape(f"/opds/search?q={quote_plus(keywords)}&page={page}")
 
