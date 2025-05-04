@@ -172,6 +172,9 @@ async def search_books(q: str = Query(...), page: int = Query(1)):
     if next_page:
         next_link = f"<link rel='next' href='/opds/search?q={quote_plus(keywords)}&page={next_page}' type='application/atom+xml'/>"
 
+    if page > 1:
+        next_link += f"\n    <link rel='previous' href='/opds/search?q={quote_plus(keywords)}&page={page - 1}' type='application/atom+xml'/>"
+        next_link += f"\n    <link rel='first' href='/opds/search?q={quote_plus(keywords)}&page=1' type='application/atom+xml'/>"
 
 
 
