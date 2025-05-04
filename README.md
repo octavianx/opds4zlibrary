@@ -61,8 +61,15 @@ playwright install chromium
 在项目根目录创建 `.env` 文件，内容示例：
 
 ```bash
-ZLIB_EMAIL=your@email.com
-ZLIB_PASSWORD=your_password
+ZLIB_EMAIL= "your@email.com"
+ZLIB_PASSWORD= "your_password"
+ 
+NYT_API_KEY="仅当你需要使用NewYorkTimes功能时使用"
+
+OPDS_USER="yourname"
+OPDS_PASS="yourpass"
+
+
 ```
 
 用于Playwright自动登录提取Z-Lib登录cookie。
