@@ -20,6 +20,13 @@ cookies_jar = httpx.Cookies()
 USERNAME = os.getenv("OPDS_USER", "admin")
 PASSWORD = os.getenv("OPDS_PASS", "password")
  
+import re
+
+# 将subnail的url升级为 大图
+def upgrade_cover_url(url: str) -> str:
+    return re.sub(r"/covers(100|200)/", "/covers400/", url, count=1)
+
+
 
 # 注意一定要写 auto_error = false才能让你的http header有效
 security = HTTPBasic(auto_error=False)
@@ -28,6 +35,7 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
     if credentials is None or not credentials.username:
         # 未提供任何凭证
         logger.info(f"🚨 no credential provided")
+       # logger.info(f"user {credentials.username} pass: {credentials.password}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
@@ -188,6 +196,8 @@ async def search_books(q: str = Query(...), page: int = Query(1), credentials: H
         emoji = emoji_map.get(extension.lower(), "📦")
         summary = f"{emoji} {extension.upper()}, {filesize}, {year}"
 
+        big_cover_url=upgrade_cover_url(cover_url)
+
         entries += f"""
         <entry>
             <title>{title}</title>
@@ -198,8 +208,10 @@ async def search_books(q: str = Query(...), page: int = Query(1), credentials: H
             <link rel='http://opds-spec.org/acquisition' href='{book_url}' type='application/octet-stream'/>
             <updated>{datetime.utcnow().isoformat()}Z</updated>
             <content type='text'>{summary}</content>
-            <link rel='http://opds-spec.org/image' href='{cover_url}' type='image/jpeg'/>
-            <link rel='http://opds-spec.org/image/thumbnail' href='{cover_url}' type='image/jpeg'/>
+            <link type='image/jpeg' href='{big_cover_url}' rel='http://opds-spec.org/cover'  />
+            <link type='image/jpeg' href='{cover_url}' rel='http://opds-spec.org/thumbnail'   />
+            <link type='image/jpeg' href='{big_cover_url}' rel='http://opds-spec.org/image'  />
+            <link type='image/jpeg' href='{cover_url}' rel='http://opds-spec.org/image/thumbnail' />
         </entry>
         """
 
