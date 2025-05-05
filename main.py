@@ -101,6 +101,16 @@ async def opds_index(request: Request, credentials: HTTPBasicCredentials = Depen
     <id>urn:zlib:opds:nyt-bestsellers</id>
     <link rel='subsection' href='/opds/nyt-bestsellers' type='application/atom+xml'/>
   </entry>
+        <entry>
+            <updated>2025-05-05T06:08:07Z</updated>
+            <id>https://www.gutenberg.org/ebooks/search.opds/?sort_order=downloads</id>
+            <title>Popular</title>
+            <content type="text">测试search python 的另外一种形态</content>
+            <link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/opds/search?q=python" />
+            <link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAS4SURBVHjaYvz//z8DLQBAADEx0AgABABZAKb/AWYuLgAAAAAA+QEBAPoAACcE9fVaGwAAQhMBASUA/f0C8Pv74c7+/sTxDw+mHQYGGBXy8lcY/f01CQUFFPkAAPLj/f3Ux/LytOD4+KwPBwft+fr6AOn09AACCGzwP6ChP75/j9NiY2t0d3FRULa0ZOAREADa9pPh++3bDA83b2bYe+XKBzF2dm5rFxdWcRcXBmYREYZ/wGB8/fgxw7XduxmWnDhx4uC3b4Vff/488ebrVwaAAGJM19Ji+PbjR4aXouK0kNJSRhZ9fYhfYGHPwsLA8PYtA8PSpQwMKioMDG5uDAxMwBD89w8amED2t28Mr9atY+ibPv3FvGfPwl5//34YIICY9QQEdC14eBbHlZdzMSsqMjC8eMHA8P49BH/4wMDw7h0Dw+/fDAyGhgwMEhIMDG/eQMRg8p8+gc3nNjVlMGBk5Ll88aLOzW/fNgIEEAv3t28pHm5uQkwgr9+5w8AADBasAOYDmDwrKwMDGxvDv9evGb5dvMjw9ckTBhFg+Mbz85se/fIlCiCAWOSZmJxkhYUZGJ4/Z2D48YOI6AYazMXF8O/pU4Yf+/czfAbibyDDgVKgwDGUlWWQZGe3BAggFj4GBmlmYGCDwxFoI07XggwEuhAUtn/27mX4vmsXw4+XLxn+QtMsCyhlAeODFxjmvP//8wMEEMufv38//XvyRJCJnx+cCrAaCopAoKH/gUH1C2jor5s3Gf4gK4G6lpmZmeEPMIh+/f3LABBALPf//j376fZteQEhIZAMIrZh3gYq/P/9O8OvK1cY/pw7x/AXyAap+IuGQRYJ8vExXAfqefHr12uAAGIGev6PHiNjuAIwfEHpmfHPH0iQAPF/YDL6BUzHXw4cALvyL1AO3TAQ/R2IeYDhLgwM36kfPnzf+fHjXIAAYv7679/9T//+aQCTipYwMKx/A4PjFzAZfX/0iOHjpUsMn69eZfiD5so/UPwbaigvLy+DjLIywwZgjut++XLn+79/JwIEEPOv////3P316/CzX790FdjYVKSAYfr8+nWGV0CD/4IiFRp+/9BcCTIUFCNikpIMogoKDCuB6brx6dNjd3//bgIKXwIIIGZWiOIvl3792nLjyxdhMVZWY0N5eYa/QJd//vYNbjByEIDSzl9g7MsCcyKTuDjDxIcPf7c8f77xwd+/1UCp4yA9AAEEii4GZmDYAjX8eP3v345Lnz59Yf/718pcVZWNAxhxb4Au+YtkOCils3ByMqgCy5gX7OwMTdevv5/24cNcYF5sBkpdhcU7QAAxgFzMDs1NIkBX8ABpKQaGwFYBgWevra3/fzA0/H+Kmfk/0Bn/jwHxDWHh/38cHP4f19L6783M/BCoPA+IBdBTKUAAYRgsAmUDVRqnsbGduGlq+v+rjc3/03x8/+8qKPz/4eLyf6Ws7H9gyXESqCwYiNmw5SmAAMJqMKy0AGYZST9GxmXHNDX///X1/f/Byel/j4DAXxkGhjVAaVN8OR8ggHAaDAp7YVAeYWDgsAaG3zwxsfcFXFxvgUVAL1BYnlCRAhBAeA0WRfInLwODOzBjh4KUEVM1AQQQI60qU4AAAwBnu/BQIoGoSgAAAABJRU5ErkJggg=="
+            />
+        </entry>
+
 </feed>"""
     return Response(content=xml.strip(), media_type="application/atom+xml")
 
