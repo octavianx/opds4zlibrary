@@ -226,23 +226,20 @@ async def search_books(q: str = Query(...), page: int = Query(1), credentials: H
     next_link_tag = soup.select_one("div.paginator noscript a")
     if next_link_tag:
         logger.info(f"✅ Found paginator: {next_link_tag.get('href')}")
-    else:
-        logger.warning("⚠️ No pagination link found.")
-
-    if next_link_tag:
         next_href = next_link_tag.get("href", "")
-    # 提取下一页页码
         next_page = parse_qs(urlparse(next_href).query).get("page", [None])[0]
 
-    if next_page:
-        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={next_page}")
-        next_link = f"<link rel='next' href='{temp_href}' type='application/atom+xml'/>"
+        if next_page:
+            temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={next_page}")
+            next_link = f"<link rel='next' href='{temp_href}' type='application/atom+xml'/>"
 
-    if page > 1:
-        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={page - 1}")
-        next_link += f"\n    <link rel='previous' href='{temp_href}' type='application/atom+xml'/>"
-        temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page=1")
-        next_link += f"\n    <link rel='first' href='{temp_href}' type='application/atom+xml'/>"
+        if page > 1:
+            temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page={page - 1}")
+            next_link += f"\n    <link rel='previous' href='{temp_href}' type='application/atom+xml'/>"
+            temp_href = escape(f"/opds/search?q={quote_plus(keywords)}&page=1")
+            next_link += f"\n    <link rel='first' href='{temp_href}' type='application/atom+xml'/>"
+    else:
+        logger.warning("⚠️ No pagination link found.")
 
     href_escaped = escape(f"/opds/search?q={quote_plus(keywords)}&page={page}")
 
