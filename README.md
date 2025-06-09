@@ -118,7 +118,7 @@ python zlib_opds_launcher.py
 
 | 状态 | 任务 | 说明 |
 |:------- |:---- |:---- |
-| ✅ 完成 | 基础OPDS目录（/opds, /opds/root.xml, /opds/opensearch.xml） | 兼容常见OPDS客户端 |
+| ✅ 完成 | 基础OPDS目录 | 兼容常见OPDS客户端 |
 | ✅ 完成 | 搜索+分页功能（/opds/search） | 支持多关键词检索 |
 | 🆕 计划 | Popular推荐（/opds/popular） | 模拟分类浏览 |
 | ✅ 完成 | 带登录cookie的中转下载 | 保证大部分文件能顺利下载 |
